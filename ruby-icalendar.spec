@@ -4,9 +4,9 @@ Version:	0.98
 Release:	1
 License:	Ruby's
 Group:		Development/Languages
-Source0:	http://rubyforge.org/frs/download.php/16745/icalendar-0.98.gem
+Source0:	http://rubyforge.org/frs/download.php/16745/icalendar-%{version}.gem
 # Source0-md5:	7381ac5225cb3fc337a87605e9d7aa37
-Patch0:	%{name}-noeval.patch
+Patch0:		%{name}-noeval.patch
 URL:		http://icalendar.rubyforge.org
 BuildRequires:	rake
 BuildRequires:	rpmbuild(macros) >= 1.277
@@ -16,7 +16,9 @@ Requires:	ruby-builder
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-This library provides iCalendar support for ruby. (RFC-2445) (Note: this is the format supported by Apple ical, Mozilla Sunbird, Evolution etc...)
+This library provides iCalendar support for ruby. (RFC-2445) (Note:
+this is the format supported by Apple ical, Mozilla Sunbird, Evolution
+etc...)
 
 %prep
 %setup -q -c
