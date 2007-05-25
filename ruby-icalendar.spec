@@ -1,4 +1,5 @@
 Summary:	iCalendar parser and generator for Ruby
+Summary(pl.UTF-8):	Analizator i generator formatu iCalendar dla języka Ruby
 Name:		ruby-icalendar
 Version:	0.98
 Release:	1
@@ -7,7 +8,7 @@ Group:		Development/Languages
 Source0:	http://rubyforge.org/frs/download.php/16745/icalendar-%{version}.gem
 # Source0-md5:	7381ac5225cb3fc337a87605e9d7aa37
 Patch0:		%{name}-noeval.patch
-URL:		http://icalendar.rubyforge.org
+URL:		http://icalendar.rubyforge.org/
 BuildRequires:	rake
 BuildRequires:	rpmbuild(macros) >= 1.277
 BuildRequires:	setup.rb = 3.3.1
@@ -16,9 +17,14 @@ Requires:	ruby-builder
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-This library provides iCalendar support for ruby. (RFC-2445) (Note:
+This library provides iCalendar (RFC 2445) support for Ruby. (Note:
 this is the format supported by Apple ical, Mozilla Sunbird, Evolution
 etc...)
+
+%description -l pl.UTF-8
+Ta biblioteka udostępnia obsługę formatu iCalendar (RFC 2445) dla
+języka Ruby (jest to format obsługiwany przez programy Apple ical,
+Mozilla Sunbird, Evolution itp.).
 
 %prep
 %setup -q -c
