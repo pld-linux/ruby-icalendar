@@ -1,0 +1,268 @@
+diff -ur ruby-icalendar-0.98-o/lib/icalendar/component.rb ruby-icalendar-0.98/lib/icalendar/component.rb
+--- ruby-icalendar-0.98-o/lib/icalendar/component.rb	1969-12-31 17:00:00.000000000 -0700
++++ ruby-icalendar-0.98/lib/icalendar/component.rb	2007-05-25 01:11:05.000000000 -0600
+@@ -35,7 +35,9 @@
+   # Freebusy time information, or an Alarm.
+   class Component < Icalendar::Base
+ 
+-    meta_include HashAttrs
++		class << self
++			include HashAttrs
++		end
+ 
+     attr_reader :name
+     attr_accessor :properties
+@@ -229,27 +231,27 @@
+ 
+     def Component.generate_getter(property, alias_name)
+       unless instance_methods.include? property
+-        code = <<-code
+-            def #{property}(val = nil, params = nil)
+-              return @properties["#{property}"] if val.nil?
++				class_eval do
++					define_method(property) do |*params|
++						val, params = *params
++						return @properties[property] if val.nil?
+ 
+-              unless val.respond_to?(:to_ical)
+-                raise(NotImplementedError, "Value of type (" + val.class.to_s + ") does not support to_ical method!")
+-              end
++						unless val.respond_to?(:to_ical)
++              raise(NotImplementedError, "Value of type (" + val.class.to_s + ") does not support to_ical method!")
++            end
+ 
+-              unless params.nil?
+-                # Extend with the parameter methods only if we have to...
+-                unless val.respond_to?(:ical_params) 
+-                  val.class.class_eval { attr_accessor :ical_params }
+-                end
+-                val.ical_params = params
++            unless params.nil?
++              # Extend with the parameter methods only if we have to...
++              unless val.respond_to?(:ical_params) 
++                val.class.class_eval { attr_accessor :ical_params }
+               end
+-
+-              @properties["#{property}"] = val
++              val.ical_params = params
+             end
+-        code
+ 
+-        class_eval code, "component.rb", 219
++            @properties[property] = val
++					end
++				end
++
+         alias_method("#{alias_name}", "#{property}") unless alias_name.nil?
+       end
+     end
+@@ -257,13 +259,12 @@
+     def Component.generate_setter(property, alias_name)
+       setter = property + '='
+       unless instance_methods.include? setter
+-        code = <<-code
+-            def #{setter}(val)
+-              #{property}(val)
+-            end
+-        code
++				class_eval do
++					define_method(setter) do |val|
++						self.send(property, val)
++					end
++				end
+ 
+-        class_eval code, "component.rb", 233
+         alias_method("#{alias_name}=", "#{property+'='}") unless alias_name.nil?
+       end
+     end
+@@ -271,13 +272,11 @@
+     def Component.generate_query(property, alias_name)
+       query = "#{property}?"
+       unless instance_methods.include? query
+-        code = <<-code
+-            def #{query}
+-              @properties.has_key?("#{property.downcase}")
+-            end
+-        code
+-
+-        class_eval code, "component.rb", 226
++        class_eval do
++					define_method(query) do
++						@properties.has_key?("#{property.downcase}")
++					end
++				end
+ 
+         alias_method("#{alias_name}\?", "#{query}") unless alias_name.nil?
+       end    
+@@ -286,53 +285,47 @@
+     def Component.generate_multi_getter(property, plural)     
+       # Getter for whole array
+       unless instance_methods.include? plural
+-        code = <<-code
+-            def #{plural}(a = nil)
+-              if a.nil?
+-                @properties["#{property}"] || []
+-              else
+-                self.#{plural}=(a)
+-              end 
+-            end
+-        code
+-
+-        class_eval code, "component.rb", 186
++				class_eval do
++					define_method(plural) do |*a|
++						if a.nil?
++							@properties["#{property}"] || []
++						else
++							self.send("#{plural}=", a)
++						end 
++					end
++				end
+       end
+     end
+ 
+     def Component.generate_multi_setter(property, plural)
+       # Setter for whole array
+       unless instance_methods.include? plural+'+'
+-        code = <<-code
+-            def #{plural}=(a)
+-              if a.respond_to?(:to_ary)
+-                a.to_ary.each do |val|
+-                  unless val.respond_to?(:to_ical)
+-                    raise(NotImplementedError, "Property values do not support to_ical method!")
+-                  end
++				class_eval do
++					define_method("#{plural}=") do |a|
++						if a.respond_to?(:to_ary)
++              a.to_ary.each do |val|
++                unless val.respond_to?(:to_ical)
++                  raise(NotImplementedError, "Property values do not support to_ical method!")
+                 end
+-
+-                @properties["#{property}"] = a.to_ary
+-              else
+-                raise ArgumentError, "#{plural} is a multi-property that must be an array! Use the add_[property] method to add single entries."
+               end
+-            end
+-        code
+ 
+-        class_eval code, "component.rb", 198
++              @properties["#{property}"] = a.to_ary
++						else
++              raise ArgumentError, "#{plural} is a multi-property that must be an array! Use the add_[property] method to add single entries."
++            end
++          end
++				end
+       end
+     end
+ 
+     def Component.generate_multi_query(property, plural)
+       # Query for any of these properties
+       unless instance_methods.include? plural+'?'
+-        code = <<-code
+-            def #{plural}?
+-              @properties.has_key?("#{property}")
+-            end
+-        code
+-
+-        class_eval code, "component.rb", 210
++				class_eval do
++					define_method("#{plural}?") do
++						@properties.has_key?("#{property}")
++					end
++				end
+       end
+     end
+ 
+@@ -340,29 +333,29 @@
+       adder = "add_"+singular.to_s
+       # Add another item to this properties array
+       unless instance_methods.include? adder
+-        code = <<-code
+-            def #{adder}(val, params = {})
+-              unless val.respond_to?(:to_ical)
+-                raise(NotImplementedError, "Property value object does not support to_ical method!")
+-              end
+-
+-              unless params.nil?
+-                # Extend with the parameter methods only if we have to...
+-                unless val.respond_to?(:ical_params) 
+-                  val.class.class_eval { attr_accessor :ical_params }
+-                end
+-                val.ical_params = params
++				class_eval do
++					define_method(adder) do |val, params|
++						params ||= {}
++						unless val.respond_to?(:to_ical)
++							raise(NotImplementedError, "Property value object does not support to_ical method!")
++						end
++
++            unless params.nil?
++              # Extend with the parameter methods only if we have to...
++              unless val.respond_to?(:ical_params) 
++                val.class.class_eval { attr_accessor :ical_params }
+               end
++              val.ical_params = params
++            end
+ 
+-              if @properties.has_key?("#{property}")
+-                @properties["#{property}"] << val
+-              else
+-                @properties["#{property}"] = [val]
+-              end
++            if @properties.has_key?("#{property}")
++              @properties["#{property}"] << val
++            else
++              @properties["#{property}"] = [val]
+             end
+-        code
++          end
++				end
+ 
+-        class_eval code, "component.rb", 289
+         alias_method("add_#{property.downcase}", "#{adder}") 
+       end
+     end
+@@ -370,15 +363,14 @@
+     def Component.generate_multi_remover(property, singular)
+       # Remove an item from this properties array
+       unless instance_methods.include? "remove_#{singular}"
+-        code = <<-code
+-            def remove_#{singular}(a)
+-              if @properties.has_key?("#{property}")
+-                @properties["#{property}"].delete(a)
+-              end
++				class_eval do
++					define_method("remove_#{singular}") do |a|
++						if @properties.has_key?("#{property}")
++              @properties["#{property}"].delete(a)
+             end
+-        code
++          end
++				end
+ 
+-        class_eval code, "component.rb", 303
+         alias_method("remove_#{property.downcase}", "remove_#{singular}")
+       end
+     end
+diff -ur ruby-icalendar-0.98-o/lib/icalendar.rb ruby-icalendar-0.98/lib/icalendar.rb
+--- ruby-icalendar-0.98-o/lib/icalendar.rb	1969-12-31 17:00:00.000000000 -0700
++++ ruby-icalendar-0.98/lib/icalendar.rb	2007-05-25 01:11:45.000000000 -0600
+@@ -6,16 +6,11 @@
+   details.
+ =end
+ 
+-$:.unshift(File.dirname(__FILE__))
+-
+ ### Base classes and mixin modules
+ 
+ # to_ical methods for built-in classes
+ require 'icalendar/conversions'
+ 
+-# Meta-programming helper methods
+-require 'meta'
+-
+ # Hash attributes mixin module
+ require 'hash_attrs'
+ 
+Only in ruby-icalendar-0.98-o/lib: meta.rb
