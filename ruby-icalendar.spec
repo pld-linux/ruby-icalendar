@@ -9,7 +9,6 @@ Source0:	http://rubyforge.org/frs/download.php/16745/icalendar-%{version}.gem
 # Source0-md5:	7381ac5225cb3fc337a87605e9d7aa37
 Patch0:		%{name}-noeval.patch
 URL:		http://icalendar.rubyforge.org/
-BuildRequires:	rake
 BuildRequires:	rpmbuild(macros) >= 1.277
 BuildRequires:	setup.rb >= 3.3.1
 Requires:	ruby-builder
