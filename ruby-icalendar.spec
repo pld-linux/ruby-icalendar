@@ -28,7 +28,7 @@ Mozilla Sunbird, Evolution itp.).
 %prep
 %setup -q -c
 tar xf %{SOURCE0} -O data.tar.gz | tar xzv-
-%patch0 -p1
+%patch -P0 -p1
 cp %{_datadir}/setup.rb .
 
 %build
